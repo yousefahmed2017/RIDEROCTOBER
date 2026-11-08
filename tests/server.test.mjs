@@ -1,0 +1,30 @@
+// اختبار السيرفر: دخول، رفع صورة، حفظ إعلان، قراءة عامة، منع الرفع بدون تسجيل دخول، منع الخروج من المجلد.
+import assert from 'node:assert/strict';
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'orider-'));
+process.env.DATA_DIR = dir; process.env.ADMIN_PASSWORD = 'test-pass-1'; process.env.PORT = '0';
+const { server } = await import('../server/server.mjs');
+await new Promise((r) => (server.listening ? r() : server.once('listening', r)));
+const base = 'http://127.0.0.1:' + server.address().port;
+const j = async (p, o) => { const r = await fetch(base + p, o); return { s: r.status, j: await r.json().catch(() => ({})), r }; };
+
+assert.equal((await j('/api/admin/config')).s, 401); console.log('✓ الإدارة مقفولة بدون دخول');
+assert.equal((await j('/api/login', { method: 'POST', body: JSON.stringify({ password: 'غلط' }) })).s, 401); console.log('✓ كلمة سر غلط بتترفض');
+const { j: { token } } = await j('/api/login', { method: 'POST', body: JSON.stringify({ password: 'test-pass-1' }) }); assert.ok(token);
+const H = { Authorization: 'Bearer ' + token };
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+const up = await j('/api/admin/upload?name=a.png', { method: 'POST', headers: H, body: png }); assert.equal(up.s, 200); console.log('✓ رفع صورة', up.j.url);
+assert.equal((await j('/api/admin/upload?name=evil.exe', { method: 'POST', headers: H, body: png })).s, 400); console.log('✓ امتداد خطر مرفوض');
+assert.equal((await j('/api/admin/upload?name=a.glb', { method: 'POST', headers: H, body: png })).s, 400); console.log('✓ GLB مزيف مرفوض');
+const put = await j('/api/admin/config', { method: 'PUT', headers: H, body: JSON.stringify({ ads: [{ title: 'اختبار', type: 'banner', image: up.j.url, lat: '29.95', lon: 30.91 }, { type: 'xx' }], landmarks: [{ name: 'مول', lat: 29.9, lon: 30.9, image: up.j.url, mode: 'zzz' }], models: { sedan: { url: '/uploads/x.glb', length: 4.4 }, hack: { url: 'y' } } }) });
+assert.equal(put.s, 200); assert.equal(put.j.ads[0].lat, 29.95); assert.equal(put.j.ads[1].type, 'billboard'); assert.equal(put.j.landmarks[0].mode, 'both'); assert.ok(put.j.models.sedan && !put.j.models.hack); console.log('✓ حفظ وتنقية المحتوى');
+const pub = await j('/api/config'); assert.equal(pub.j.ads.length, 2); assert.equal(pub.j.version, 2); console.log('✓ اللعبة بتقرا المحتوى العام');
+const img = await fetch(base + up.j.url); assert.equal(img.status, 200); assert.equal(img.headers.get('content-type'), 'image/png'); console.log('✓ الصورة بتتقدم');
+assert.ok((await fetch(base + '/uploads/..%2f..%2fadmin.json')).status >= 400); const esc = await fetch(base + '/..%2fserver%2fdata%2fadmin.json'); assert.ok(esc.status >= 400); console.log('✓ مفيش خروج من المجلد');
+const idx = await fetch(base + '/'); assert.equal(idx.status, 200); assert.equal((await fetch(base + '/admin/')).status, 200); console.log('✓ اللعبة ولوحة الإدارة بتتقدم');
+const mp3 = Buffer.concat([Buffer.from([0xff, 0xfb, 0x90, 0x00]), Buffer.alloc(2000, 7)]);
+const au = await j('/api/admin/upload?name=song.mp3', { method: 'POST', headers: H, body: mp3 }); assert.equal(au.s, 200); assert.match(au.j.url, /^\/uploads\/.+\.mp3$/); console.log('✓ رفع أغنية mp3', au.j.url);
+const mput = await j('/api/admin/config', { method: 'PUT', headers: H, body: JSON.stringify({ ads: [], landmarks: [], models: {}, music: { tracks: [{ url: au.j.url, name: 'أغنية تجربة', where: 'game' }, { url: 'http://evil.com/x.mp3', name: 'x' }, { url: '/uploads/../../etc/passwd', name: 'y' }, { url: 'https://cdn.example.com/a.mp3', name: 'خارجي', where: 'zzz' }] } }) });
+assert.equal(mput.s, 200); assert.equal(mput.j.music.tracks.length, 2); assert.equal(mput.j.music.tracks[0].where, 'game'); assert.equal(mput.j.music.tracks[1].where, 'both'); console.log('✓ الموسيقى بتتحفظ وبتتنقّى (روابط غريبة بتتشال)');
+const rg = await fetch(base + au.j.url, { headers: { Range: 'bytes=0-99' } }); assert.equal(rg.status, 206); assert.equal(rg.headers.get('content-type'), 'audio/mpeg'); assert.equal((await rg.arrayBuffer()).byteLength, 100); console.log('✓ الأغنية بتتقدم بـ Range (Safari/iOS)');
+console.log('\n12 اختبار سيرفر نجحوا ✅'); server.close(); fs.rmSync(dir, { recursive: true, force: true }); process.exit(0);

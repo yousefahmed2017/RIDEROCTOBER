@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0E1A2B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="كوكب الجحود أكتوبر">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>كوكب الجحود أكتوبر — لعبة دليفري بالموتوسيكل في 6 أكتوبر</title>
+<meta name="description" content="لعبة دليفري وسباقات بالموتوسيكل في شوارع مدينة 6 أكتوبر الحقيقية. وصّل الطلبات، سابق صحابك أونلاين، وكلّمهم لايف. مجانًا من المتصفح.">
+<meta property="og:title" content="كوكب الجحود أكتوبر">
+<meta property="og:description" content="دليفري وسباقات بالموتوسيكل في 6 أكتوبر — أونلاين مع صحابك.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<!-- ═════ القائمة الرئيسية ═════ -->
+<section id="menu">
+  <div class="menu-card mshell">
+  <div class="mc-col mc-a">
+    <div class="logo">
+      <img class="logo-img" src="assets/logo.png" alt="كوكب الجحود أكتوبر">
+      <h1>كوكب الجحود أكتوبر</h1>
+      <p>دليفري بالموتوسيكل في شوارع 6 أكتوبر.<br>وصّل الطلبات، اكسب نقط، وكلّم صحابك لايف.</p>
+    </div>
+    <div class="wallet"><span id="mn-money">💰 0</span><span id="mn-bike">🏍️</span><button id="btn-garage" class="btn mini">🏠 الجراج والمعرض</button></div>
+    
+    <div class="row"><label class="grow">اسمك<input id="name" maxlength="14" autocomplete="off"></label></div>
+    <div class="swatches" id="swatches" aria-label="لون الموتوسيكل"></div>
+    <div class="row"><button id="btn-wardrobe" class="btn mini">👕 تلبيس ورسم الشخصية</button></div>
+        <div class="row"><button id="btn-account" class="btn mini primary">👤 تسجيل الدخول / حساب جديد</button></div>
+    <p id="acct-status" class="status"></p>
+      </div>
+  <div class="mc-col mc-b">
+    <details class="adv" id="district-box"><summary>📍 الحي / المنطقة: <b id="district-name"></b></summary>
+      <div class="row"><label class="grow">اختار الحي أو المعلم<select id="district-sel"></select></label></div>
+      <div id="district-info" class="dinfo"></div>
+      <div class="row"><label>خط العرض<input id="d-lat" inputmode="decimal" dir="ltr"></label><label>خط الطول<input id="d-lon" inputmode="decimal" dir="ltr"></label></div>
+      <div class="row"><button id="d-save" class="btn mini">💾 حفظ الإحداثيات</button><button id="d-reset" class="btn mini">↩️ الافتراضي</button></div>
+    </details>
+        <div class="modes" id="modes">
+      <button class="mode on" data-mode="delivery"><b>🍔 توصيل</b><small>طلبات وركّاب في أكتوبر</small></button>
+      <button class="mode" data-mode="patrol"><b>👮 لجنة أكتوبر</b><small>طارد المخالفين ووقّفهم</small></button>
+      <button class="mode" data-mode="endless"><b>🏁 تحدي الطريق</b><small>عربيات وويلي بلا نهاية</small></button>
+      <button class="mode" data-mode="race"><b>🏎️ سباق الشارع</b><small>لفّتين · نفس المسار للكل</small></button>
+    </div>
+        <div class="actions">
+      <button id="btn-solo" class="btn primary">🏍️ العب لوحدك</button>
+      <button id="btn-lite" class="btn" title="خفيف على الموبايلات الضعيفة — من فوق 2D">🗺️ العب 2D خفيف</button>
+      <button id="btn-host" class="btn">🏁 اعمل غرفة</button>
+      <div class="join"><input id="code" maxlength="5" placeholder="كود الغرفة" autocomplete="off"><button id="btn-join" class="btn">ادخل</button></div>
+    </div>
+    <div class="row roomopts">
+      <label class="grow">🔒 كلمة سر الغرفة (اختياري)<input id="room-pw" maxlength="12" autocomplete="off" placeholder="سيبها فاضية لغرفة مفتوحة"></label>
+      <label>أقصى لاعبين<select id="room-max"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10" selected>10</option></select></label>
+    </div>
+      </div>
+  <div class="mc-col mc-c">
+    <div class="row qt">
+      <label>الجودة
+        <select id="quality"><option value="auto">تلقائية (حسب الجهاز)</option><option value="low">عادية (موبايل)</option><option value="high">عالية (ظلال)</option></select>
+      </label>
+      <label>الوقت
+        <select id="timemode">
+          <option value="real">حقيقي (القاهرة)</option>
+          <option value="day">نهار</option>
+          <option value="sunset">غروب</option>
+          <option value="night">ليل</option>
+        </select>
+      </label></div>
+    <details class="adv adv-set" open><summary>⚙️ إعدادات اللعب</summary>
+    <div class="row">
+      <label>القيادة
+        <select id="drive"><option value="1">سهلة (مساعد مسار)</option><option value="0.5">متوسطة</option><option value="0">عادية (حقيقية)</option></select>
+      </label>
+      <label>البنزين
+        <select id="autogas"><option value="1">تلقائي</option><option value="0">يدوي</option></select>
+      </label>
+      <label>زحمة المدينة
+        <select id="density"><option value="low">منخفضة</option><option value="mid">متوسطة</option><option value="high">عالية</option></select>
+      </label>
+        <label>حجم الخريطة<select id="mapsize" title="بيعيد تحميل اللعبة"></select></label>
+    </div>
+    </details>
+        <div class="row"><label class="grow">سيرفر الإعلانات (اختياري)<input id="srv" dir="ltr" placeholder="http://192.168.1.5:8080" autocomplete="off"></label></div>
+        <div class="row wa-row"><a id="btn-wa" class="btn mini hidden" target="_blank" rel="noopener">💬 تواصل مع المطوّر على واتساب</a></div>
+    <p id="menu-status" class="status"></p>
+    <p class="hint">الموبايل: أزرار الشاشة · الكيبورد: ← → توجيه، ↑ بنزين، ↓ فرامل، H كلاكس، M مايك، R ريفيرس، F (مطوّلًا) تعبئة بنزين، Tab لوحة الترتيب</p>
+      </div>
+  <div class="mc-foot">
+    <div id="ad-menu"></div>
+    <button id="btn-admin" class="admin-dot" title="الإدارة" aria-label="دخول الإدارة">⚙</button>
+    <p class="credit">خريطة © مساهمو OpenStreetMap · <button class="link" data-info="about">عن اللعبة</button> · <button class="link" data-info="privacy">الخصوصية</button> · <button class="link" data-info="terms">الشروط</button></p></div>
+  </div>
+</section>
+
+<div id="loading" class="hidden"><div class="spinner"></div><p id="loading-text">جاري التحميل…</p><p id="loading-tip" class="tip"></p></div>
+
+<canvas id="lite" class="hidden"></canvas>
+
+<!-- ═════ واجهة اللعب ═════ -->
+<div id="hud" class="hidden">
+  <div id="topleft">
+    <div class="mapwrap" id="mapwrap" title="اضغط لتكبير الخريطة"><canvas id="minimap" width="320" height="320"></canvas><span class="north">N</span></div>
+    <div id="whereami" class="chip"><b id="street">—</b><small id="district"></small></div>
+    <div id="roomchip" class="chip hidden"><span id="roomcode"></span><button id="btn-share" title="نسخ/مشاركة">📋</button><span id="peercount"></span></div>
+    <div id="fuelbox" class="chip"><span>⛽</span><div class="fuelbar"><i id="fuel-bar"></i></div><b id="fuel-l"></b></div>
+    <div id="gps" class="chip"><span id="gps-arrow"><svg viewBox="0 0 48 48" class="navsvg"><path d="M24 3 L42 41 L24 32 L6 41 Z" fill="currentColor" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span><span id="gps-txt">أقرب محطة</span></div>
+    <div id="refuel" class="chip hidden"></div>
+  </div>
+
+  <div id="center">
+    <div id="offer" class="card hidden min">
+      <div class="card-head"><b id="o-type">📋 الطلبات المتاحة</b><button class="cardtog x" id="o-refresh" title="تحديث القائمة">⟳</button><button class="cardtog" id="o-tog" title="فتح/غلق قائمة الطلبات">▾</button></div>
+      <div id="o-list" class="x"></div>
+    </div>
+    <div id="mission" class="card hidden">
+      <div class="card-head"><b id="m-type"></b><span class="reward" id="m-reward"></span><button class="cardtog" id="m-tog" title="تصغير/تكبير">—</button></div>
+      <div class="target"><span id="m-arrow"><svg viewBox="0 0 48 48" class="navsvg"><path d="M24 3 L42 41 L24 32 L6 41 Z" fill="currentColor" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span><div><div id="m-target"></div><b id="m-dir" class="dirtxt"></b><small id="m-hint" class="x"></small></div></div>
+      <div class="meta"><span id="m-dist"></span><span id="m-time" class="time"></span></div>
+      <div class="bar x"><i id="m-quality"></i></div><small id="m-qlabel" class="x"></small>
+      <button id="m-cancel" class="link x">إلغاء الطلب</button>
+    </div>
+    <div id="modecard" class="card hidden">
+      <div class="card-head"><b id="mc-title"></b><span class="reward" id="mc-reward"></span><button class="cardtog" id="mc-tog" title="تصغير/تكبير">—</button></div>
+      <div class="target"><span id="mc-arrow"><svg viewBox="0 0 48 48" class="navsvg"><path d="M24 3 L42 41 L24 32 L6 41 Z" fill="currentColor" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span><div><div id="mc-line"></div><small id="mc-sub" class="x"></small></div></div>
+      <div class="meta"><span id="mc-a"></span><span id="mc-b" class="time"></span></div>
+      <div class="bar x"><i id="mc-bar"></i></div>
+    </div>
+  </div>
+
+  <div id="topright">
+    <button id="btn-profile" class="pill"><span id="p-level"></span><b id="p-points"></b><span id="p-streak"></span><span class="money" id="p-money"></span></button>
+    <button id="btn-lb" class="round" title="الترتيب">🏆</button>
+    <button id="btn-menu" class="round" title="القائمة">☰</button>
+  </div>
+  <div id="leaderboard" class="panel hidden"></div>
+
+  <div id="speedo"><b id="speed">0</b><small>كم/س</small><div class="risk" title="الاتزان"><i id="risk"></i></div></div>
+
+  <div id="controls">
+    <div class="steer">
+      <button id="b-left" class="ctl wide">◀</button>
+      <button id="b-right" class="ctl wide">▶</button>
+    </div>
+    <div class="side">
+      <button id="b-mic" class="ctl small mic" title="المايك">🎙️</button>
+      <button id="b-cam" class="ctl small" title="الكاميرا (C): مطاردة / من العدّاد / درون">🎥</button>
+      <button id="b-vmode" class="ctl small" title="نطاق الصوت">📍</button>
+      <button id="b-horn" class="ctl small">📣</button>
+      <button id="b-garage" class="ctl small hidden" title="الجراج">🏠</button>
+      <button id="b-wheelie" class="ctl small hidden" title="ويلي">🏍️↑</button>
+    </div>
+    <div class="pedals">
+      <button id="b-brake" class="ctl pedal brake">فرامل</button>
+      <button id="b-gas" class="ctl pedal gas">بنزين</button>
+    </div>
+  </div>
+
+  <div id="engine" class="hidden"><div class="eng-card"><div class="eng-ico">🔑</div><b id="eng-text">بيدوّر الموتور…</b><div class="eng-dots"><i></i><i></i><i></i></div></div></div>
+  <div id="dbanner" class="hidden"></div>
+  <div id="bigmap" class="modal hidden"><div class="sheet bigmap"><div class="g-head"><h2>🗺️ خريطة 6 أكتوبر</h2><button id="bm-close" class="round">✕</button></div><canvas id="bm" width="900" height="900"></canvas><small class="muted">أسماء الشوارع والأحياء — اضغط في أي مكان لإغلاق</small></div></div>
+  <div id="edge" class="hidden">⚠️ اقتربت من حدود الخريطة — لف وارجع للمدينة</div>
+  <div id="pump" class="hidden"></div>
+  <div id="toasts"></div>
+  <div id="countdown" class="hidden"></div>
+  <div id="customer" class="hidden"></div>
+  <div id="result" class="modal hidden"></div>
+</div>
+
+<div id="stats" class="modal hidden"></div>
+<div id="info" class="modal hidden"></div>
+
+<!-- ═════ دخول الإدارة + لوحتها ═════ -->
+<div id="adminlogin" class="modal hidden"><div class="sheet" style="text-align:right">
+  <h2 id="al-title">دخول الإدارة</h2><small id="al-mode" class="muted"></small>
+  <label id="al-user-row" class="fld" hidden>اسم المستخدم (للموظفين فقط — سيبه فاضي لو إنت المدير)<input id="al-user" dir="ltr" autocomplete="username" autocapitalize="off"></label>
+  <label id="al-srv-row" class="fld">عنوان السيرفر (اختياري)<input id="al-srv" dir="ltr" placeholder="http://192.168.1.5:8080"></label>
+  <label class="fld">كلمة السر<input id="al-pw" type="password" autocomplete="current-password"></label>
+  <label class="fld" id="al-pw2-row">أعد كتابة كلمة السر<input id="al-pw2" type="password"></label>
+  <p id="al-err" style="color:var(--rose);min-height:1.2em;margin:6px 0"></p>
+  <div class="btns"><button id="al-go" class="btn primary">دخول</button><button id="al-cancel" class="btn">إلغاء</button></div>
+</div></div>
+<div id="adminp" class="modal hidden"></div>
+
+<!-- ═════ الجراج والمعرض ═════ -->
+<div id="garage" class="modal hidden">
+  <div class="sheet garage">
+    <div class="g-head"><h2>🏠 الجراج والمعرض</h2><b id="g-money" class="reward"></b><button id="g-close" class="round">✕</button></div>
+    <canvas id="g-view"></canvas>
+    <div id="g-tabs" class="tabs"></div>
+    <div class="g-info"><h3 id="g-name"></h3><small id="g-blurb"></small></div>
+    <div id="g-stats" class="stats"></div>
+    <button id="g-action" class="btn"></button>
+    <h4>التطوير</h4><small id="g-fuel" class="muted"></small>
+    <div id="g-upg"></div>
+    <h4>لون الموتوسيكل</h4><div id="g-colors" class="swatches"></div>
+  </div>
+</div>
+
+<!-- ═════ غرفة التلبيس والرسم ═════ -->
+<div id="wardrobe" class="modal hidden">
+  <div class="sheet garage wardrobe">
+    <div class="g-head"><h2>👕 غرفة التلبيس</h2><button id="w-close" class="round">✕</button></div>
+    <canvas id="w-view"></canvas><small class="muted">اسحب المعاينة بإصبعك للدوران</small>
+    <div id="w-types"></div>
+    <div id="w-colors"></div>
+    <h4>🎨 ارسم على ملابسك</h4>
+    <div id="w-surf" class="tabs"></div>
+    <div class="padwrap"><canvas id="w-pad" width="256" height="256"></canvas></div>
+    <div id="w-brush" class="swatches"></div>
+    <div id="w-tools" class="tabs"></div><div id="w-stamps" class="tabs"></div>
+    <label class="w-size">حجم الفرشاة<input id="w-size" type="range" min="3" max="40" value="10"></label>
+    <div class="btns"><button id="w-save" class="btn primary">حفظ الطقم</button><button id="w-reset" class="btn">إعادة ضبط</button></div>
+  </div>
+</div>
+
+<script type="module" src="js/game.js"></script>
+</body>
+</html>

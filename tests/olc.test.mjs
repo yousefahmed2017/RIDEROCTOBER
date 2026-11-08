@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { parsePlace } from '../www/js/olc.js';
+import { DIRECTORY, insideMap, offsetFrom } from '../www/js/lm-directory.js';
+const C = { lat: 29.924063, lon: 30.926437 };
+const c = parsePlace('WWFG+JH', C); assert(Math.abs(c.lat - C.lat) < 1e-4 && Math.abs(c.lon - C.lon) < 1e-4); console.log('✓ كود الموقع القصير بيتفك صح (مركز الخريطة)');
+const h = parsePlace('XWFV+2H الحي الأول', C); assert(Math.abs(h.lat - 29.97256) < 1e-3 && Math.abs(h.lon - 30.94394) < 1e-3); console.log('✓ مسجد الحصري من كود الموقع');
+assert.deepEqual(parsePlace('29.95265, 30.92191'), { lat: 29.95265, lon: 30.92191 }); assert.equal(parsePlace('كلام مش كود'), null); console.log('✓ lat,lon + رفض النص الغلط');
+assert.equal(insideMap(C, 1000, C.lat, C.lon), true); assert.equal(insideMap(C, 1000, 29.97256, 30.94394), false); assert(Math.abs(offsetFrom(C, C.lat - 0.009, C.lon).z - 1000) < 20); console.log('✓ جوه/برة حدود الخريطة');
+assert(DIRECTORY.every((e) => typeof e.lat !== 'number' || (e.lat > 29.5 && e.lat < 30.3 && e.lon > 30.6 && e.lon < 31.3))); console.log('✓ إحداثيات الدليل منطقية (منطقة أكتوبر/زايد)');
+console.log('\nاختبار الدليل وكود الموقع نجح ✅');

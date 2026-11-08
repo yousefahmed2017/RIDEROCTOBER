@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إدارة كوكب الجحود أكتوبر</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1424;--panel:#13213a;--panel2:#192a48;--line:#2a3d62;--text:#eaf1ff;--mute:#9db0cf;--sun:#ff7a1a;--teal:#19c2a0;--rose:#ff4d6d;--gold:#ffc83d;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:500 15px/1.6 Cairo,Tahoma,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:var(--text)}
+header{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+header h1{margin:0;font-size:18px;flex:1}header h1 small{color:var(--mute);font-weight:500;margin-inline-start:8px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;transition:.15s}.btn:hover{border-color:var(--sun)}
+.btn.primary{background:var(--sun);border-color:var(--sun);color:#fff;font-weight:800}.btn.danger{border-color:var(--rose);color:var(--rose)}.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+nav{display:flex;gap:6px;padding:10px 18px;overflow:auto;border-bottom:1px solid var(--line)}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px;cursor:pointer;color:var(--mute);white-space:nowrap}
+nav button.on{color:var(--text);border-color:var(--sun);font-weight:800}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:16px;padding:16px 18px;max-width:1300px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.card .thumb{height:120px;border-radius:10px;background:#0a1220 center/cover no-repeat;display:grid;place-items:center;color:var(--mute);font-size:13px}
+.card h3{margin:0;font-size:16px}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:12px;border-radius:99px;padding:1px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--mute)}.tag.ok{color:var(--teal);border-color:var(--teal)}.tag.off{color:var(--rose);border-color:var(--rose)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1}
+#map{height:340px;border-radius:16px;border:1px solid var(--line);position:sticky;top:76px}
+.leaflet-container{background:#0a1220}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(560px,94vw);max-height:92vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 2px}
+input[type=text],input[type=number],input[type=password],input[type=datetime-local],select,textarea{width:100%;background:#0c1830;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--sun);outline-offset:0}
+.empty{color:var(--mute);text-align:center;padding:40px 10px;border:1px dashed var(--line);border-radius:16px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--teal);padding:10px 18px;border-radius:14px;z-index:99;opacity:0;pointer-events:none;transition:.25s}.toast.show{opacity:1}.toast.bad{border-color:var(--rose)}
+#login{max-width:360px;margin:12vh auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center}
+.hint{font-size:12px;color:var(--mute)}.dirty{color:var(--gold);font-size:13px}
+.preview{max-width:100%;max-height:180px;border-radius:10px;display:block;margin:6px 0}
+.tip{background:rgba(25,194,160,.1);border:1px solid rgba(25,194,160,.4);border-radius:12px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+.search-res{max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px}.search-res div{padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px}.search-res div:hover{background:var(--panel2)}
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <h2 style="margin:0 0 4px">🏍️ إدارة كوكب الجحود أكتوبر</h2><p class="hint">سجّل دخول عشان تتحكم في الإعلانات والمعالم والموديلات</p>
+  <input id="pw" type="password" placeholder="كلمة السر" autocomplete="current-password"><div style="height:10px"></div>
+  <button id="go" class="btn primary" style="width:100%">دخول</button><p id="lerr" style="color:var(--rose);margin:10px 0 0"></p>
+</div>
+
+<div id="app" hidden>
+<header><h1>🏍️ إدارة كوكب الجحود أكتوبر <small id="ver"></small></h1><span id="dirty" class="dirty"></span><button id="save" class="btn primary">💾 حفظ ونشر</button><button id="logout" class="btn sm">خروج</button></header>
+<nav id="tabs"><button data-t="ads" class="on">📢 الإعلانات والبانرات</button><button data-t="lm">📍 صور المعالم</button><button data-t="veh">🚗 موديلات المركبات</button><button data-t="set">⚙️ الإعدادات</button></nav>
+<main>
+  <section id="pane"></section>
+  <aside><div id="map"></div><p class="hint">الخريطة بتعرض كل الإعلانات (🟠) والمعالم (🟢). لما تفتح عنصر للتعديل، اضغط على الخريطة عشان تحدد مكانه.</p></aside>
+</main>
+</div>
+
+<dialog id="dlg"></dialog><div id="toast" class="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let token=sessionStorage.getItem('orider-admin')||'', cfg=null, tab='ads', dirty=false, map=null, markers=null, pick=null;
+const CENTER=[29.9466,30.9169];
+const VK={sedan:'سيدان',hatch:'هاتشباك',suv:'SUV',pickup:'ربع نقل',taxi:'تاكسي',microbus:'ميكروباص',bus:'أتوبيس',tuktuk:'توك توك',moto:'موتوسيكل مرور',scooter:'سكوتر مرور',car:'أي عربية (افتراضي)'};
+const VLEN={sedan:4.5,hatch:3.95,suv:4.7,pickup:5,taxi:4.5,microbus:5.2,bus:10.5,tuktuk:2.6,moto:1.9,scooter:1.7,car:4.4};
+const AT={billboard:'بيلبورد كبير',banner:'بانر رأسي',poster:'لوحة صغيرة'};
+function toast(m,bad){const t=$('#toast');t.textContent=m;t.className='toast show'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='toast',2600)}
+async function api(path,opt={}){const r=await fetch(path,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+token}});if(r.status===401){logout();throw new Error('انتهت الجلسة')}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'خطأ');return j}
+function setDirty(v=true){dirty=v;$('#dirty').textContent=v?'● فيه تعديلات لسه ما اتنشرتش':'';}
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+function logout(){token='';sessionStorage.removeItem('orider-admin');$('#app').hidden=true;$('#login').hidden=false}
+async function boot(){
+  if(!token){$('#login').hidden=false;return}
+  try{cfg=await api('/api/admin/config');$('#login').hidden=true;$('#app').hidden=false;initMap();render();$('#ver').textContent='النسخة '+cfg.version}catch(e){logout()}
+}
+$('#go').onclick=async()=>{try{const r=await fetch('/api/login',{method:'POST',body:JSON.stringify({password:$('#pw').value})});const j=await r.json();if(!r.ok)throw new Error(j.error);token=j.token;sessionStorage.setItem('orider-admin',token);$('#lerr').textContent='';boot()}catch(e){$('#lerr').textContent=e.message}};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#logout').onclick=logout;
+$('#save').onclick=async()=>{const b=$('#save');b.disabled=true;try{cfg=await api('/api/admin/config',{method:'PUT',body:JSON.stringify(cfg)});setDirty(false);$('#ver').textContent='النسخة '+cfg.version;toast('اتنشر ✔ — اللاعبين هيشوفوه أول ما يفتحوا اللعبة')}catch(e){toast(e.message,true)}b.disabled=false};
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));render()};
+
+// ── الخريطة ──
+function initMap(){
+  if(map)return;map=L.map('map').setView(CENTER,13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  markers=L.layerGroup().addTo(map);
+  map.on('click',e=>{if(!pick)return;pick(+e.latlng.lat.toFixed(6),+e.latlng.lng.toFixed(6))});
+}
+function drawMarkers(){if(!markers)return;markers.clearLayers();
+  for(const a of cfg.ads)if(typeof a.lat==='number'&&typeof a.lon==='number')L.circleMarker([a.lat,a.lon],{radius:8,color:'#fff',weight:2,fillColor:'#ff7a1a',fillOpacity:1}).bindTooltip(esc(a.title||'إعلان')).addTo(markers);
+  for(const l of cfg.landmarks)if(typeof l.lat==='number'&&typeof l.lon==='number')L.circleMarker([l.lat,l.lon],{radius:8,color:'#fff',weight:2,fillColor:'#19c2a0',fillOpacity:1}).bindTooltip(esc(l.name||'معلم')).addTo(markers)}
+
+// ── رفع الصور (بيصغّر الصورة قبل الرفع) ──
+function shrink(file,max=1280){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>b?res(b):rej(new Error('فشل ضغط الصورة')),'image/jpeg',.86)};im.onerror=()=>rej(new Error('الملف مش صورة'));im.src=URL.createObjectURL(file)})}
+async function upload(blob,name){const r=await api('/api/admin/upload?name='+encodeURIComponent(name),{method:'POST',body:blob,headers:{'Content-Type':'application/octet-stream'}});return r.url}
+
+function render(){drawMarkers();({ads:viewAds,lm:viewLm,veh:viewVeh,set:viewSet})[tab]()}
+
+// ── الإعلانات ──
+function viewAds(){const p=$('#pane');
+  p.innerHTML=`<div class="tip">أضف صورة إعلانك واختار نوعه. لو حددت مكان على الخريطة هيظهر في نفس المكان بالظبط، ولو سيبته فاضي اللعبة هتوزّعه تلقائي على الشوارع الرئيسية.</div>
+  <div class="row" style="margin-bottom:12px"><h2 class="grow" style="margin:0">الإعلانات (${cfg.ads.length})</h2><button class="btn primary" id="add">＋ إعلان جديد</button></div>
+  <div class="grid">${cfg.ads.map((a,i)=>`<div class="card"><div class="thumb" style="background-image:url('${esc(a.image)}')">${a.image?'':'بدون صورة'}</div><h3>${esc(a.title||'بدون عنوان')}</h3>
+  <div class="tags"><span class="tag">${AT[a.type]}</span><span class="tag ${a.active?'ok':'off'}">${a.active?'شغال':'موقوف'}</span><span class="tag">${typeof a.lat==='number'?'📍 مكان محدد':'🔀 توزيع تلقائي'}</span></div>
+  <div class="row"><button class="btn sm" data-e="${i}">تعديل</button><button class="btn sm" data-t="${i}">${a.active?'إيقاف':'تشغيل'}</button><button class="btn sm danger" data-d="${i}">حذف</button>${typeof a.lat==='number'?`<button class="btn sm" data-z="${i}">🗺</button>`:''}</div></div>`).join('')||'<div class="empty" style="grid-column:1/-1">مفيش إعلانات لسه</div>'}</div>`;
+  $('#add').onclick=()=>editAd({id:crypto.randomUUID(),type:'billboard',active:true},true);
+  p.onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+    if(d.e!=null)editAd(cfg.ads[d.e]);else if(d.t!=null){cfg.ads[d.t].active=!cfg.ads[d.t].active;setDirty();render()}
+    else if(d.d!=null){if(confirm('حذف الإعلان؟')){cfg.ads.splice(d.d,1);setDirty();render()}}else if(d.z!=null){const a=cfg.ads[d.z];map.setView([a.lat,a.lon],17)}}}
+function editAd(a,isNew){const o={...a},dlg=$('#dlg');
+  dlg.innerHTML=`<h3 style="margin-top:0">${isNew?'إعلان جديد':'تعديل الإعلان'}</h3>
+  <label>العنوان (للتنظيم بس)</label><input type="text" id="f-title" value="${esc(o.title)}">
+  <label>النوع</label><select id="f-type">${Object.entries(AT).map(([k,v])=>`<option value="${k}" ${o.type===k?'selected':''}>${v}</option>`).join('')}</select>
+  <label>الصورة</label><input type="file" id="f-file" accept="image/*"><img id="f-prev" class="preview" ${o.image?`src="${esc(o.image)}"`:'hidden'}>
+  <div class="row"><div class="grow"><label>خط العرض (lat)</label><input type="number" step="any" id="f-lat" value="${o.lat??''}"></div><div class="grow"><label>خط الطول (lon)</label><input type="number" step="any" id="f-lon" value="${o.lon??''}"></div></div>
+  <p class="hint">اضغط على الخريطة عشان تملّي الإحداثيات تلقائي ${o.lat!=null?'':'(أو سيبها فاضية للتوزيع التلقائي)'}.</p>
+  <div class="row"><div class="grow"><label>يبدأ في (اختياري)</label><input type="datetime-local" id="f-st" value="${(o.startsAt||'').slice(0,16)}"></div><div class="grow"><label>ينتهي في (اختياري)</label><input type="datetime-local" id="f-en" value="${(o.endsAt||'').slice(0,16)}"></div></div>
+  <label>رابط (اختياري)</label><input type="text" id="f-link" dir="ltr" value="${esc(o.link)}">
+  <div class="row" style="margin-top:16px"><button class="btn primary grow" id="f-ok">تمام</button><button class="btn" id="f-no">إلغاء</button></div>`;
+  dlg.showModal();pick=(la,lo)=>{$('#f-lat').value=la;$('#f-lon').value=lo;L.popup().setLatLng([la,lo]).setContent('تم تحديد المكان').openOn(map)};
+  $('#f-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{toast('بيرفع الصورة…');o.image=await upload(await shrink(f),'ad.jpg');$('#f-prev').src=o.image;$('#f-prev').hidden=false;toast('اترفعت ✔')}catch(er){toast(er.message,true)}};
+  $('#f-no').onclick=()=>{pick=null;dlg.close()};
+  $('#f-ok').onclick=()=>{if(!o.image){toast('ارفع صورة الإعلان الأول',true);return}
+    Object.assign(o,{title:$('#f-title').value.trim(),type:$('#f-type').value,lat:$('#f-lat').value===''?undefined:+$('#f-lat').value,lon:$('#f-lon').value===''?undefined:+$('#f-lon').value,startsAt:$('#f-st').value?new Date($('#f-st').value).toISOString():undefined,endsAt:$('#f-en').value?new Date($('#f-en').value).toISOString():undefined,link:$('#f-link').value.trim()});
+    if((o.lat===undefined)!==(o.lon===undefined)){toast('لازم تحدد lat و lon مع بعض',true);return}
+    if(isNew)cfg.ads.push(o);else Object.assign(a,o);pick=null;dlg.close();setDirty();render()}}
+
+// ── المعالم ──
+function viewLm(){const p=$('#pane');
+  p.innerHTML=`<div class="tip">اربط صورة حقيقية بمعلم: اللعبة هتلصقها على واجهة أقرب مبنى و/أو على لوحة قدام المعلم، وتحط اسم المعلم فوقه. استخدم صورك أنت أو صور مرخّصة.</div>
+  <div class="row" style="margin-bottom:12px"><h2 class="grow" style="margin:0">المعالم (${cfg.landmarks.length})</h2><button class="btn primary" id="add">＋ معلم جديد</button></div>
+  <div class="grid">${cfg.landmarks.map((l,i)=>`<div class="card"><div class="thumb" style="background-image:url('${esc(l.image)}')">${l.image?'':'بدون صورة'}</div><h3>${esc(l.name||'بدون اسم')}</h3>
+  <div class="tags"><span class="tag">${{facade:'على الواجهة',poster:'لوحة',both:'واجهة + لوحة'}[l.mode]}</span><span class="tag ${l.active?'ok':'off'}">${l.active?'شغال':'موقوف'}</span></div>
+  <div class="row"><button class="btn sm" data-e="${i}">تعديل</button><button class="btn sm" data-t="${i}">${l.active?'إيقاف':'تشغيل'}</button><button class="btn sm danger" data-d="${i}">حذف</button><button class="btn sm" data-z="${i}">🗺</button></div></div>`).join('')||'<div class="empty" style="grid-column:1/-1">مفيش معالم لسه</div>'}</div>`;
+  $('#add').onclick=()=>editLm({id:crypto.randomUUID(),mode:'both',active:true},true);
+  p.onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+    if(d.e!=null)editLm(cfg.landmarks[d.e]);else if(d.t!=null){cfg.landmarks[d.t].active=!cfg.landmarks[d.t].active;setDirty();render()}
+    else if(d.d!=null){if(confirm('حذف المعلم؟')){cfg.landmarks.splice(d.d,1);setDirty();render()}}else if(d.z!=null){const l=cfg.landmarks[d.z];if(l.lat!=null)map.setView([l.lat,l.lon],17)}}}
+function editLm(l,isNew){const o={...l},dlg=$('#dlg');
+  dlg.innerHTML=`<h3 style="margin-top:0">${isNew?'معلم جديد':'تعديل المعلم'}</h3>
+  <label>اسم المعلم</label><input type="text" id="f-name" value="${esc(o.name)}" placeholder="مثال: مول مصر">
+  <label>ابحث عن المكان (يحتاج نت)</label><div class="row"><input type="text" id="f-q" class="grow" placeholder="مثال: Mall of Egypt"><button class="btn" id="f-s">بحث</button></div><div id="f-r" class="search-res" hidden></div>
+  <div class="row"><div class="grow"><label>lat</label><input type="number" step="any" id="f-lat" value="${o.lat??''}"></div><div class="grow"><label>lon</label><input type="number" step="any" id="f-lon" value="${o.lon??''}"></div></div>
+  <p class="hint">أو اضغط على الخريطة لتحديد المكان بدقة.</p>
+  <label>الصورة</label><input type="file" id="f-file" accept="image/*"><img id="f-prev" class="preview" ${o.image?`src="${esc(o.image)}"`:'hidden'}>
+  <label>طريقة العرض</label><select id="f-mode"><option value="both" ${o.mode==='both'?'selected':''}>على الواجهة + لوحة قدام المعلم</option><option value="facade" ${o.mode==='facade'?'selected':''}>على واجهة المبنى فقط</option><option value="poster" ${o.mode==='poster'?'selected':''}>لوحة قدام المعلم فقط</option></select>
+  <label>ملاحظة (اختياري)</label><input type="text" id="f-note" value="${esc(o.note)}">
+  <div class="row" style="margin-top:16px"><button class="btn primary grow" id="f-ok">تمام</button><button class="btn" id="f-no">إلغاء</button></div>`;
+  dlg.showModal();const setPos=(la,lo)=>{$('#f-lat').value=la;$('#f-lon').value=lo;map.setView([la,lo],17)};pick=(la,lo)=>{$('#f-lat').value=la;$('#f-lon').value=lo};
+  $('#f-s').onclick=async()=>{const q=$('#f-q').value.trim();if(!q)return;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ar&viewbox=30.7,30.1,31.2,29.8&q='+encodeURIComponent(q)).then(r=>r.json());const box=$('#f-r');box.hidden=false;box.innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.display_name)}</div>`).join('')||'<div>مفيش نتايج</div>';box.onclick=e=>{const d=e.target.closest('[data-i]');if(!d)return;const x=r[d.dataset.i];setPos(+(+x.lat).toFixed(6),+(+x.lon).toFixed(6));if(!$('#f-name').value)$('#f-name').value=x.name||x.display_name.split(',')[0];box.hidden=true}}catch(e){toast('البحث محتاج نت',true)}};
+  $('#f-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{toast('بيرفع الصورة…');o.image=await upload(await shrink(f),'landmark.jpg');$('#f-prev').src=o.image;$('#f-prev').hidden=false;toast('اترفعت ✔')}catch(er){toast(er.message,true)}};
+  $('#f-no').onclick=()=>{pick=null;dlg.close()};
+  $('#f-ok').onclick=()=>{const la=$('#f-lat').value,lo=$('#f-lon').value;if(!$('#f-name').value.trim()||la===''||lo===''){toast('الاسم والمكان مطلوبين',true);return}
+    Object.assign(o,{name:$('#f-name').value.trim(),lat:+la,lon:+lo,mode:$('#f-mode').value,note:$('#f-note').value.trim()});if(isNew)cfg.landmarks.push(o);else Object.assign(l,o);pick=null;dlg.close();setDirty();render()}}
+
+// ── موديلات المركبات ──
+function viewVeh(){const p=$('#pane');
+  p.innerHTML=`<div class="tip">اللعبة فيها موديلات مفصّلة جاهزة. لو عايز موديل أواقعي أكتر، ارفع ملف <b>GLB</b> لأي نوع (مثلاً من Sketchfab أو Poly Pizza بترخيص مجاني). الطول بالمتر بيضبط الحجم تلقائي، والدوران لو الموديل بيبص لاتجاه غلط.</div>
+  <h2 style="margin-top:0">موديلات المركبات</h2><div class="grid">${Object.keys(VK).map(k=>{const m=cfg.models[k];return `<div class="card"><h3>${VK[k]}</h3><div class="tags"><span class="tag ${m?'ok':''}">${m?'موديل مخصص':'الموديل الافتراضي'}</span></div>
+  ${m?`<div class="row"><div class="grow"><label>الطول (م)</label><input type="number" step="0.1" data-len="${k}" value="${m.length}"></div><div class="grow"><label>دوران°</label><select data-rot="${k}">${[0,90,180,270].map(d=>`<option value="${d}" ${Math.round((m.rotY||0)*180/Math.PI)===d?'selected':''}>${d}</option>`).join('')}</select></div></div><small class="hint">${esc(m.url)}</small>`:''}
+  <div class="row"><label class="btn sm" style="margin:0;cursor:pointer">${m?'استبدال':'رفع GLB'}<input type="file" accept=".glb" data-up="${k}" hidden></label>${m?`<button class="btn sm danger" data-rm="${k}">رجوع للافتراضي</button>`:''}</div></div>`}).join('')}</div>`;
+  p.onchange=async e=>{const t=e.target,d=t.dataset;
+    if(d.up){const f=t.files[0];if(!f)return;if(f.size>25e6){toast('الملف أكبر من 25 ميجا',true);return}try{toast('بيرفع الموديل…');const url=await upload(f,'v.glb');cfg.models[d.up]={url,length:VLEN[d.up],rotY:0};setDirty();render();toast('اترفع ✔')}catch(er){toast(er.message,true)}}
+    else if(d.len){cfg.models[d.len].length=+t.value||4.4;setDirty()}else if(d.rot){cfg.models[d.rot].rotY=+t.value*Math.PI/180;setDirty()}};
+  p.onclick=e=>{const b=e.target.closest('[data-rm]');if(b){delete cfg.models[b.dataset.rm];setDirty();render()}}}
+
+// ── الإعدادات ──
+function viewSet(){const p=$('#pane');
+  p.innerHTML=`<h2 style="margin-top:0">الإعدادات</h2><div class="card" style="max-width:420px"><h3>تغيير كلمة السر</h3><input type="password" id="np" placeholder="كلمة سر جديدة (6 حروف على الأقل)"><button class="btn primary" id="cp">تغيير</button></div>
+  <div class="card" style="max-width:420px;margin-top:12px"><h3>رابط اللاعبين</h3><p class="hint">اللاعبين يفتحوا اللعبة من نفس السيرفر: <b dir="ltr">${location.origin}/</b><br>أو يكتبوا العنوان ده في خانة «سيرفر الإعلانات» جوه اللعبة (لو بيشغلوها من مكان تاني / تطبيق أندرويد).</p></div>`;
+  $('#cp').onclick=async()=>{try{await api('/api/admin/password',{method:'POST',body:JSON.stringify({password:$('#np').value})});toast('اتغيرت ✔');$('#np').value=''}catch(e){toast(e.message,true)}}}
+
+$('#dlg').addEventListener('close',()=>{pick=null});
+boot();
+</script>
+<script src="players.js"></script>
+</body>
+</html>

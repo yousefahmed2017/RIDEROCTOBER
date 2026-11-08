@@ -1,0 +1,26 @@
+{
+  "name": "october-rider",
+  "version": "0.1.0",
+  "description": "كوكب الجحود أكتوبر — لعبة توصيل موتوسيكل P2P في مدينة 6 أكتوبر",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve www -l 8080",
+    "test": "node tests/core.test.mjs && node tests/city.test.mjs && node tests/modes.test.mjs && node tests/assist.test.mjs && node tests/server.test.mjs && node tests/accounts.test.mjs && node tests/extras.test.mjs && node tests/messages.test.mjs && node tests/walker.test.mjs && node tests/olc.test.mjs && node tests/glbchars.test.mjs && node tests/imgfit.test.mjs && node tests/geoimport.test.mjs && node tests/elevation.test.mjs && node tests/features.test.mjs && node tests/preloader-ads.test.mjs && node tests/districts.test.mjs && node tests/rider.test.mjs && node tests/staff.test.mjs",
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "build:html": "node scripts/build-html.mjs",
+    "server": "node server/server.mjs",
+    "music": "node scripts/music-list.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "esbuild": "^0.28.2",
+    "peerjs": "^1.5.4",
+    "three": "^0.160.0"
+  }
+}
